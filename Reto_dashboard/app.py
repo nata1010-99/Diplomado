@@ -1,5 +1,5 @@
+from cargar_datos_secop import show_data_tab
 import streamlit as st
-from Dashboard_clase.cargar_datos import show_data_tab  # Solo importas esta pestaña por ahora
 
 # Título de la app
 st.set_page_config(page_title="Dashboard SECOP", layout="wide")

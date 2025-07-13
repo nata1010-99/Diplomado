@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+from transformacion_secop import clean_secop_data  
 
 # ===========================================================
 # FUNCION: Cargar datos desde SECOP Integrado
@@ -43,10 +44,22 @@ def show_data_tab():
             df_raw = load_data_from_api()
 
         if not df_raw.empty:
-            st.session_state['df_raw'] = df_raw
-            st.success(f"✅ ¡Datos cargados exitosamente! ({len(df_raw)} filas)")
-            st.dataframe(df_raw.head(10))
+            df_clean = clean_secop_data(df_raw)  # 👈 aplicas limpieza
+            st.session_state['df_raw'] = df_clean
+            st.success(f"✅ ¡Datos cargados exitosamente! ({len(df_clean)} filas)")
+            st.dataframe(df_clean.head(10))
         else:
             st.warning("⚠️ No se encontraron datos o ocurrió un error.")
     else:
         st.info("Haz clic en el botón para cargar los datos.")
+
+# ===========================================================
+# FUNCION: Obtener df_raw limpio para usar en otras partes
+# ===========================================================
+def get_df_raw(limit: int = 1000) -> pd.DataFrame:
+    df = load_data_from_api(limit)
+    if not df.empty:
+        return clean_secop_data(df)
+    else:
+        return pd.DataFrame()
+    

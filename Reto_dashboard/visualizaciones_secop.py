@@ -4,8 +4,19 @@ import seaborn as sns
 import streamlit as st
 from scipy.stats import pearsonr
 from cargar_datos_secop import get_df_raw
+import unidecode
+import re  # ✅ Para reemplazo con expresiones regulares
 
-df_raw = get_df_raw()
+df_raw = get_df_raw(limit=50000)  
+
+def normalizar_nombre_departamento(nombre):
+    if pd.isna(nombre):
+        return ""
+    nombre = unidecode.unidecode(nombre)
+    nombre = nombre.lower().strip()
+    nombre = nombre.replace("-", " ").replace("_", " ").replace(".", "")
+    nombre = re.sub(r"\s+", " ", nombre)  # ✅ Reemplazo de múltiples espacios
+    return nombre
 
 def show_visualizations_tab():
     st.header("📊 Visualizaciones de contratación pública")
@@ -27,13 +38,17 @@ def show_visualizations_tab():
     df_pob_ult = df_pob[df_pob['AÑO'] == año_reciente]
     df_pob_departamento = df_pob_ult.groupby('DPNOM', as_index=False)['Población'].sum()
     df_pob_departamento.rename(columns={'DPNOM': 'departamento_entidad', 'Población': 'poblacion_2035'}, inplace=True)
+    df_pob_departamento['departamento_entidad'] = df_pob_departamento['departamento_entidad'].apply(normalizar_nombre_departamento)
 
-    df_contratos_por_dep = df_raw.groupby('departamento_entidad', as_index=False).size()
+    df_filtrado = df_raw[df_raw['departamento_entidad'].notna()]
+    df_filtrado = df_filtrado[df_filtrado['departamento_entidad'].str.strip() != ""]
+    
+    df_contratos_por_dep = df_filtrado.groupby('departamento_entidad', as_index=False).size()
     df_contratos_por_dep.rename(columns={'size': 'num_contratos'}, inplace=True)
+    df_contratos_por_dep['departamento_entidad'] = df_contratos_por_dep['departamento_entidad'].apply(normalizar_nombre_departamento)
 
     df_tasa = pd.merge(df_contratos_por_dep, df_pob_departamento, on='departamento_entidad', how='left')
     df_tasa['contratos_por_1000_hab'] = (df_tasa['num_contratos'] / df_tasa['poblacion_2035']) * 1000
-
     df_top = df_tasa.sort_values(by='contratos_por_1000_hab', ascending=False).head(10)
 
     fig1, ax1 = plt.subplots(figsize=(10, 6))
@@ -49,14 +64,9 @@ def show_visualizations_tab():
     df_pob_2035 = df_pob[df_pob['AÑO'] == 2035]
     df_poblacion = df_pob_2035.groupby('DPNOM')['Población'].sum().reset_index()
     df_poblacion.rename(columns={'DPNOM': 'departamento_entidad', 'Población': 'poblacion_2035'}, inplace=True)
+    df_poblacion['departamento_entidad'] = df_poblacion['departamento_entidad'].apply(normalizar_nombre_departamento)
 
-    df_contratos_por_depto = df_raw.groupby('departamento_entidad').size().reset_index(name='num_contratos')
-
-    # 🔧 Normalizar nombres antes de hacer el merge
-    df_contratos_por_depto['departamento_entidad'] = df_contratos_por_depto['departamento_entidad'].str.strip().str.lower()
-    df_poblacion['departamento_entidad'] = df_poblacion['departamento_entidad'].str.strip().str.lower()
-
-    df_contratos_pob = df_contratos_por_depto.merge(df_poblacion, on='departamento_entidad', how='inner')
+    df_contratos_pob = df_contratos_por_dep.merge(df_poblacion, on='departamento_entidad', how='inner')
 
     fig2, ax2 = plt.subplots(figsize=(10, 6))
     sns.scatterplot(data=df_contratos_pob, x='poblacion_2035', y='num_contratos', ax=ax2)
@@ -86,7 +96,6 @@ def show_visualizations_tab():
 
     df['fecha_inicio_ejecuci_n'] = pd.to_datetime(df['fecha_inicio_ejecuci_n'], errors='coerce')
     df = df[df['fecha_inicio_ejecuci_n'].notna()]
-
     df['anio_mes'] = df['fecha_inicio_ejecuci_n'].dt.to_period('M')
 
     df_evolucion = df.groupby(['anio_mes', 'tipo_de_contrato'])['valor_contrato'].sum().reset_index()
@@ -124,4 +133,3 @@ def show_visualizations_tab():
     with st.expander("🔍 Ver tabla mensual por tipo de contrato"):
         df_pivot = df_evolucion_reciente.pivot(index='anio_mes', columns='tipo_de_contrato', values='valor_contrato').fillna(0)
         st.dataframe(df_pivot, use_container_width=True)
-

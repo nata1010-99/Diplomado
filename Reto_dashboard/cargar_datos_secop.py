@@ -6,11 +6,11 @@ from transformacion_secop import clean_secop_data
 # ===========================================================
 # FUNCION: Cargar datos desde SECOP Integrado
 # ===========================================================
-def load_data_from_api(limit: int = 1000) -> pd.DataFrame:
+def load_data_from_api(limit: int = 5000) -> pd.DataFrame:
     """
     Carga datos desde la API de SECOP Integrado (datos.gov.co).
     Args:
-        limit (int): Límite de registros (por defecto 1000 para pruebas).
+        limit (int): Límite de registros (por defecto 5000).
     Returns:
         pd.DataFrame: DataFrame con los datos cargados o vacío si falla.
     """
@@ -41,10 +41,10 @@ def show_data_tab():
 
     if st.button("🔄 Cargar datos"):
         with st.spinner("Cargando datos desde la API de SECOP..."):
-            df_raw = load_data_from_api()
+            df_raw = load_data_from_api(limit=5000)  # ✅ Límite ajustado
 
         if not df_raw.empty:
-            df_clean = clean_secop_data(df_raw)  # 👈 aplicas limpieza
+            df_clean = clean_secop_data(df_raw)
             st.session_state['df_raw'] = df_clean
             st.success(f"✅ ¡Datos cargados exitosamente! ({len(df_clean)} filas)")
             st.dataframe(df_clean.head(10))
@@ -56,10 +56,10 @@ def show_data_tab():
 # ===========================================================
 # FUNCION: Obtener df_raw limpio para usar en otras partes
 # ===========================================================
-def get_df_raw(limit: int = 1000) -> pd.DataFrame:
+def get_df_raw(limit: int = 5000) -> pd.DataFrame:
     df = load_data_from_api(limit)
     if not df.empty:
         return clean_secop_data(df)
     else:
         return pd.DataFrame()
-    
+

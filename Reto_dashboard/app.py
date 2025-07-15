@@ -6,18 +6,17 @@ from visualizaciones_secop import show_visualizations_tab
 st.set_page_config(page_title="Dashboard SECOP", layout="wide")
 st.title("📊 Dashboard SECOP - Prototipo Inicial")
 
-# ✅ Pestañas correctamente organizadas
-tabs = st.tabs(["📋 Carga de Datos", "🔧 Transformaciones", "📈 Visualizaciones"])
+# ✅ Agregar pestaña de Transformaciones
+tabs = st.tabs(["📋 Carga de Datos", "🔧 Transformaciones", "📈 Visualizaciones", ])
 
 with tabs[0]:
     show_data_tab()
 
 with tabs[1]:
-    show_transformations_tab()  # ✅ Transformaciones en pestaña 2
+    show_transformations_tab() 
 
 with tabs[2]:
-    show_visualizations_tab()  # ✅ Visualizaciones en pestaña 3
-
+    show_visualizations_tab()
 
  
 

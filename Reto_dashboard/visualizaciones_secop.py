@@ -133,3 +133,6 @@ def show_visualizations_tab():
     with st.expander("🔍 Ver tabla mensual por tipo de contrato"):
         df_pivot = df_evolucion_reciente.pivot(index='anio_mes', columns='tipo_de_contrato', values='valor_contrato').fillna(0)
         st.dataframe(df_pivot, use_container_width=True)
+
+
+
